@@ -1,11 +1,11 @@
 <script lang="ts">
   const COLORS = [
-    { name: 'Red', hex: '#e53935', textColor: '#fff' },
-    { name: 'Blue', hex: '#1e88e5', textColor: '#fff' },
-    { name: 'Green', hex: '#43a047', textColor: '#fff' },
-    { name: 'Yellow', hex: '#fdd835', textColor: '#000' },
-    { name: 'Orange', hex: '#fb8c00', textColor: '#fff' },
-    { name: 'Purple', hex: '#8e24aa', textColor: '#fff' },
+    { name: 'Red', hex: '#e53935' },
+    { name: 'Blue', hex: '#1e88e5' },
+    { name: 'Green', hex: '#43a047' },
+    { name: 'Yellow', hex: '#fdd835' },
+    { name: 'Orange', hex: '#fb8c00' },
+    { name: 'Purple', hex: '#8e24aa' },
   ];
 
   const MIN_INTERVAL = 0.5;
@@ -15,6 +15,8 @@
 
   let number = $state(0);
   let currentColor = $state<typeof COLORS[0] | null>(null);
+  let textColor = $state<typeof COLORS[0] | null>(null);
+  let showNumber = $state(true);
   let visible = $state(true);
   let running = $state(false);
   let intervalSec = $state(2);
@@ -24,10 +26,20 @@
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
   let flashTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
+  function getContrastingColor(bgIndex: number): typeof COLORS[0] {
+    let textIndex: number;
+    do {
+      textIndex = Math.floor(Math.random() * COLORS.length);
+    } while (textIndex === bgIndex);
+    return COLORS[textIndex];
+  }
+
   function generate() {
     number = Math.floor(Math.random() * 100) + 1;
     const colorIndex = Math.floor(Math.random() * COLORS.length);
     currentColor = COLORS[colorIndex];
+    showNumber = Math.random() < 0.5;
+    textColor = showNumber ? null : getContrastingColor(colorIndex);
     visible = true;
 
     if (flashMode) {
@@ -79,7 +91,6 @@
     }
   }
 
-  let isOdd = $derived(number % 2 !== 0);
 </script>
 
 {#if running}
@@ -88,14 +99,15 @@
     style:background-color={visible ? currentColor?.hex : '#1a1a1a'}
   >
     {#if visible}
-      <span class="cue-number" style:color={currentColor?.textColor}>
-        {number}
-      </span>
-      <div class="cue-hints" style:color={currentColor?.textColor}>
-        <span class="hint">{currentColor?.name}</span>
-        <span class="hint-dot">•</span>
-        <span class="hint">{isOdd ? 'Odd' : 'Even'}</span>
-      </div>
+      {#if showNumber}
+        <span class="cue-number" style:color="#fff">
+          {number}
+        </span>
+      {:else}
+        <span class="cue-word" style:color={textColor?.hex}>
+          {currentColor?.name}
+        </span>
+      {/if}
     {:else}
       <span class="blank-indicator">—</span>
     {/if}
@@ -105,16 +117,19 @@
   <div class="setup-screen">
     <div class="preview-area">
       <div class="preview-cue">
-        <span class="preview-number">?</span>
+        <span class="preview-number">42</span>
       </div>
-      <p class="preview-label">Number + Color</p>
+      <span class="preview-or">or</span>
+      <div class="preview-cue preview-word">
+        <span class="preview-text">RED</span>
+      </div>
     </div>
 
     <div class="settings-card">
       <h2>How it works</h2>
       <p class="description">
-        Shows a random number (1-100) on a random color background.
-        Use for complex drills like: "Blue = dribble, Odd = pass"
+        Randomly shows either a number (1-100) or a color word on a colored background.
+        Color words appear in a contrasting color for extra cognitive challenge.
       </p>
     </div>
 
@@ -193,23 +208,12 @@
     font-variant-numeric: tabular-nums;
   }
 
-  .cue-hints {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-top: 1rem;
-    opacity: 0.7;
-  }
-
-  .hint {
-    font-size: 1.25rem;
-    font-weight: 600;
+  .cue-word {
+    font-size: 18vw;
+    font-weight: 800;
+    line-height: 1;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
-
-  .hint-dot {
-    font-size: 0.75rem;
+    letter-spacing: 0.05em;
   }
 
   .blank-indicator {
@@ -248,33 +252,43 @@
 
   .preview-area {
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 2rem;
-    min-height: 150px;
+    gap: 1rem;
+    padding: 1.5rem;
+    min-height: 100px;
   }
 
   .preview-cue {
-    width: 100px;
-    height: 100px;
-    background: linear-gradient(135deg, #e53935 0%, #1e88e5 50%, #43a047 100%);
-    border-radius: 20px;
+    width: 70px;
+    height: 70px;
+    background: #8e24aa;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
+  .preview-cue.preview-word {
+    background: #1e88e5;
+  }
+
   .preview-number {
-    font-size: 2.5rem;
+    font-size: 1.75rem;
     font-weight: 800;
     color: white;
   }
 
-  .preview-label {
-    color: #888;
-    margin-top: 1rem;
+  .preview-text {
     font-size: 0.9rem;
+    font-weight: 800;
+    color: #fdd835;
+  }
+
+  .preview-or {
+    color: #999;
+    font-size: 0.875rem;
+    font-style: italic;
   }
 
   .settings-card {
