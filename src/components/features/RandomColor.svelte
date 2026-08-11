@@ -12,11 +12,15 @@
 
   const MIN_COLORS = 2;
   const MAX_COLORS = 6;
+  const MIN_INTERVAL = 0.5;
+  const MAX_INTERVAL = 5;
 
-  let selectedIndices = $state(new Set([0, 1])); // Red and Blue default
+  let selectedIndices = $state(new Set([0, 1]));
   let currentColor = $state<string | null>(null);
   let running = $state(false);
-  let intervalId: ReturnType<typeof setInterval> | null = null;
+  let intervalSec = $state(2);
+  let useRandomInterval = $state(false);
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
   function toggleColor(index: number) {
     if (running) return;
@@ -40,6 +44,21 @@
     currentColor = COLORS[randomIndex].hex;
   }
 
+  function getNextDelay(): number {
+    if (useRandomInterval) {
+      return (MIN_INTERVAL + Math.random() * (MAX_INTERVAL - MIN_INTERVAL)) * 1000;
+    }
+    return intervalSec * 1000;
+  }
+
+  function scheduleNext() {
+    if (!running) return;
+    timeoutId = setTimeout(() => {
+      generateColor();
+      scheduleNext();
+    }, getNextDelay());
+  }
+
   function toggle() {
     if (running) {
       stop();
@@ -51,14 +70,14 @@
   function start() {
     generateColor();
     running = true;
-    intervalId = setInterval(generateColor, 2000);
+    scheduleNext();
   }
 
   function stop() {
     running = false;
-    if (intervalId) {
-      clearInterval(intervalId);
-      intervalId = null;
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
     }
   }
 
@@ -68,6 +87,11 @@
       return selectedIndices.size <= MIN_COLORS;
     }
     return selectedIndices.size >= MAX_COLORS;
+  }
+
+  function formatInterval(): string {
+    if (useRandomInterval) return 'random (0.5-5s)';
+    return `${intervalSec}s`;
   }
 </script>
 
@@ -96,8 +120,29 @@
   </div>
 
   <p class="status" class:running>
-    {running ? 'Running - 2s interval' : 'Stopped'}
+    {running ? `Running - ${formatInterval()}` : 'Stopped'}
   </p>
+
+  <div class="interval-controls">
+    <label class="random-toggle">
+      <input type="checkbox" bind:checked={useRandomInterval} disabled={running} />
+      Random interval
+    </label>
+
+    {#if !useRandomInterval}
+      <div class="slider-row">
+        <span class="slider-label">{intervalSec}s</span>
+        <input
+          type="range"
+          min={MIN_INTERVAL}
+          max={MAX_INTERVAL}
+          step="0.5"
+          bind:value={intervalSec}
+          disabled={running}
+        />
+      </div>
+    {/if}
+  </div>
 
   <div class="controls">
     <button class="btn btn-large" class:btn-primary={!running} class:btn-secondary={running} onclick={toggle}>
@@ -112,5 +157,70 @@
     color: var(--color-text-muted);
     font-size: var(--font-size-sm);
     margin-bottom: var(--space-md);
+  }
+
+  .interval-controls {
+    margin-bottom: var(--space-lg);
+  }
+
+  .random-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+    cursor: pointer;
+  }
+
+  .random-toggle input {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--color-primary);
+  }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  .slider-label {
+    min-width: 3rem;
+    text-align: center;
+    font-weight: 600;
+    color: var(--color-primary);
+  }
+
+  .slider-row input[type="range"] {
+    flex: 1;
+    height: 8px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--color-border);
+    border-radius: 4px;
+    outline: none;
+  }
+
+  .slider-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .slider-row input[type="range"]::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+  }
+
+  .slider-row input[type="range"]:disabled {
+    opacity: 0.5;
   }
 </style>
