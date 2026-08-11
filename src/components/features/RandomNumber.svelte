@@ -48,157 +48,253 @@
       timeoutId = null;
     }
   }
-
-  function formatInterval(): string {
-    if (useRandomInterval) return 'random (0.5-5s)';
-    return `${intervalSec}s`;
-  }
 </script>
 
-<div class="random-number">
-  <div class="display-box-fullscreen">
-    <span class="display-number-huge">{number || '—'}</span>
+{#if running}
+  <!-- Fullscreen display when running -->
+  <div class="fullscreen-number">
+    <span class="giant-number">{number}</span>
+    <button class="stop-btn" onclick={toggle}>Stop</button>
   </div>
+{:else}
+  <!-- Setup UI when stopped -->
+  <div class="setup-screen">
+    <div class="preview-number">
+      <span>{number || '?'}</span>
+    </div>
 
-  <div class="bottom-controls">
-    <p class="status" class:running>
-      {running ? `Running - ${formatInterval()}` : 'Stopped'}
-    </p>
+    <div class="settings-card">
+      <h2>Interval</h2>
 
-    <div class="interval-controls">
-      <label class="random-toggle">
-        <input type="checkbox" bind:checked={useRandomInterval} disabled={running} />
-        Random interval
+      <label class="toggle-row">
+        <span>Random timing</span>
+        <input type="checkbox" bind:checked={useRandomInterval} />
       </label>
 
       {#if !useRandomInterval}
-        <div class="slider-row">
-          <span class="slider-label">{intervalSec}s</span>
+        <div class="slider-control">
           <input
             type="range"
             min={MIN_INTERVAL}
             max={MAX_INTERVAL}
             step="0.5"
             bind:value={intervalSec}
-            disabled={running}
           />
+          <span class="slider-value">{intervalSec}s</span>
         </div>
+      {:else}
+        <p class="random-hint">0.5 - 5 seconds</p>
       {/if}
     </div>
 
-    <div class="controls">
-      <button class="btn btn-large" class:btn-primary={!running} class:btn-secondary={running} onclick={toggle}>
-        {running ? 'Stop' : 'Start'}
-      </button>
-    </div>
+    <button class="start-btn" onclick={toggle}>
+      Start
+    </button>
   </div>
-</div>
+{/if}
 
 <style>
-  .random-number {
+  /* Fullscreen running state */
+  .fullscreen-number {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    background: #1a1a1a;
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 64px); /* subtract nav height */
-    height: calc(100dvh - 64px);
+    align-items: center;
+    justify-content: center;
   }
 
-  .display-box-fullscreen {
+  .giant-number {
+    font-size: 50vw;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stop-btn {
+    position: absolute;
+    bottom: 2rem;
+    padding: 1rem 3rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .stop-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+  }
+
+  /* Setup screen */
+  .setup-screen {
+    min-height: calc(100vh - 80px);
+    min-height: calc(100dvh - 80px);
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+  }
+
+  .preview-number {
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--color-surface);
-    border-radius: var(--border-radius);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    margin-bottom: var(--space-md);
-    min-height: 0;
+    background: #1a1a1a;
+    border-radius: 20px;
+    margin-bottom: 1.5rem;
   }
 
-  .display-number-huge {
-    font-size: clamp(6rem, 35vw, 20rem);
-    font-weight: 700;
-    color: var(--color-primary);
-    line-height: 1;
+  .preview-number span {
+    font-size: 30vw;
+    font-weight: 800;
+    color: #ffffff;
+    opacity: 0.4;
   }
 
-  .bottom-controls {
-    flex-shrink: 0;
-    padding-bottom: var(--space-md);
+  .settings-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   }
 
-  .status {
-    text-align: center;
-    padding: var(--space-sm);
-    font-size: var(--font-size-sm);
-    color: var(--color-text-muted);
+  .settings-card h2 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
   }
 
-  .status.running {
-    color: var(--color-success);
-  }
-
-  .interval-controls {
-    margin-bottom: var(--space-lg);
-  }
-
-  .random-toggle {
+  .toggle-row {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-md);
+    padding: 0.75rem 0;
     cursor: pointer;
   }
 
-  .random-toggle input {
-    width: 20px;
-    height: 20px;
-    accent-color: var(--color-primary);
+  .toggle-row span {
+    font-size: 1rem;
+    color: #333;
   }
 
-  .slider-row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-  }
-
-  .slider-label {
-    min-width: 3rem;
-    text-align: center;
-    font-weight: 600;
-    color: var(--color-primary);
-  }
-
-  .slider-row input[type="range"] {
-    flex: 1;
-    height: 8px;
+  .toggle-row input[type="checkbox"] {
+    width: 48px;
+    height: 28px;
     -webkit-appearance: none;
     appearance: none;
-    background: var(--color-border);
-    border-radius: 4px;
+    background: #ddd;
+    border-radius: 14px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .toggle-row input[type="checkbox"]:checked {
+    background: var(--color-primary);
+  }
+
+  .toggle-row input[type="checkbox"]::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 24px;
+    height: 24px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  .toggle-row input[type="checkbox"]:checked::before {
+    transform: translateX(20px);
+  }
+
+  .slider-control {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem 0;
+  }
+
+  .slider-control input[type="range"] {
+    flex: 1;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #e0e0e0;
+    border-radius: 3px;
     outline: none;
   }
 
-  .slider-row input[type="range"]::-webkit-slider-thumb {
+  .slider-control input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     background: var(--color-primary);
     border-radius: 50%;
     cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
   }
 
-  .slider-row input[type="range"]::-moz-range-thumb {
-    width: 24px;
-    height: 24px;
+  .slider-control input[type="range"]::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
     background: var(--color-primary);
     border-radius: 50%;
     cursor: pointer;
     border: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
   }
 
-  .slider-row input[type="range"]:disabled {
-    opacity: 0.5;
+  .slider-value {
+    min-width: 3rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    text-align: right;
+  }
+
+  .random-hint {
+    color: #888;
+    font-size: 0.9rem;
+    padding: 0.5rem 0;
+  }
+
+  .start-btn {
+    width: 100%;
+    padding: 1.25rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.2s;
+  }
+
+  .start-btn:hover {
+    background: var(--color-primary-dark);
+  }
+
+  .start-btn:active {
+    transform: scale(0.98);
   }
 </style>

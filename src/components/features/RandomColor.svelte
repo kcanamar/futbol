@@ -81,146 +81,291 @@
     }
   }
 
-  function isDisabled(index: number): boolean {
-    if (running) return true;
-    if (selectedIndices.has(index)) {
-      return selectedIndices.size <= MIN_COLORS;
-    }
-    return selectedIndices.size >= MAX_COLORS;
-  }
-
-  function formatInterval(): string {
-    if (useRandomInterval) return 'random (0.5-5s)';
-    return `${intervalSec}s`;
+  function isSelected(index: number): boolean {
+    return selectedIndices.has(index);
   }
 </script>
 
-<div class="random-color">
-  <div class="display-box" style:background-color={currentColor || '#ffffff'}>
-    {#if !currentColor}
-      <span class="display-number" style="font-size: 2rem; color: #999;">Select colors & start</span>
-    {/if}
+{#if running}
+  <!-- Fullscreen color display when running -->
+  <div class="fullscreen-color" style:background-color={currentColor}>
+    <button class="stop-btn" onclick={toggle}>Stop</button>
   </div>
+{:else}
+  <!-- Setup UI when stopped -->
+  <div class="setup-screen">
+    <div class="settings-card">
+      <h2>Select {MIN_COLORS}-{MAX_COLORS} colors</h2>
+      <p class="selection-count">{selectedIndices.size} selected</p>
 
-  <p class="selection-hint">Select {MIN_COLORS}-{MAX_COLORS} colors ({selectedIndices.size} selected)</p>
-
-  <div class="color-grid">
-    {#each COLORS as color, index}
-      <button
-        class="color-chip"
-        class:selected={selectedIndices.has(index)}
-        class:disabled={isDisabled(index)}
-        style:background-color={color.hex}
-        onclick={() => toggleColor(index)}
-        disabled={isDisabled(index)}
-        aria-label={color.name}
-        title={color.name}
-      ></button>
-    {/each}
-  </div>
-
-  <p class="status" class:running>
-    {running ? `Running - ${formatInterval()}` : 'Stopped'}
-  </p>
-
-  <div class="interval-controls">
-    <label class="random-toggle">
-      <input type="checkbox" bind:checked={useRandomInterval} disabled={running} />
-      Random interval
-    </label>
-
-    {#if !useRandomInterval}
-      <div class="slider-row">
-        <span class="slider-label">{intervalSec}s</span>
-        <input
-          type="range"
-          min={MIN_INTERVAL}
-          max={MAX_INTERVAL}
-          step="0.5"
-          bind:value={intervalSec}
-          disabled={running}
-        />
+      <div class="color-grid">
+        {#each COLORS as color, index}
+          <button
+            class="color-chip"
+            class:selected={isSelected(index)}
+            style:background-color={color.hex}
+            onclick={() => toggleColor(index)}
+            aria-label={color.name}
+          >
+            {#if isSelected(index)}
+              <svg viewBox="0 0 24 24" class="check-icon">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/>
+              </svg>
+            {/if}
+          </button>
+        {/each}
       </div>
-    {/if}
-  </div>
+    </div>
 
-  <div class="controls">
-    <button class="btn btn-large" class:btn-primary={!running} class:btn-secondary={running} onclick={toggle}>
-      {running ? 'Stop' : 'Start'}
+    <div class="settings-card">
+      <h2>Interval</h2>
+
+      <label class="toggle-row">
+        <span>Random timing</span>
+        <input type="checkbox" bind:checked={useRandomInterval} />
+      </label>
+
+      {#if !useRandomInterval}
+        <div class="slider-control">
+          <input
+            type="range"
+            min={MIN_INTERVAL}
+            max={MAX_INTERVAL}
+            step="0.5"
+            bind:value={intervalSec}
+          />
+          <span class="slider-value">{intervalSec}s</span>
+        </div>
+      {:else}
+        <p class="random-hint">0.5 - 5 seconds</p>
+      {/if}
+    </div>
+
+    <button class="start-btn" onclick={toggle}>
+      Start
     </button>
   </div>
-</div>
+{/if}
 
 <style>
-  .selection-hint {
-    text-align: center;
-    color: var(--color-text-muted);
-    font-size: var(--font-size-sm);
-    margin-bottom: var(--space-md);
+  /* Fullscreen running state */
+  .fullscreen-color {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 2rem;
   }
 
-  .interval-controls {
-    margin-bottom: var(--space-lg);
+  .stop-btn {
+    padding: 1rem 3rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    background: rgba(0, 0, 0, 0.25);
+    color: rgba(255, 255, 255, 0.9);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.2s;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
 
-  .random-toggle {
+  .stop-btn:hover {
+    background: rgba(0, 0, 0, 0.4);
+  }
+
+  /* Setup screen */
+  .setup-screen {
+    min-height: calc(100vh - 80px);
+    min-height: calc(100dvh - 80px);
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .settings-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .settings-card h2 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+  }
+
+  .selection-count {
+    font-size: 0.8rem;
+    color: #999;
+    margin-bottom: 1rem;
+  }
+
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+  }
+
+  .color-chip {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-md);
+    min-height: 60px;
+  }
+
+  .color-chip:hover {
+    transform: scale(1.05);
+  }
+
+  .color-chip:active {
+    transform: scale(0.95);
+  }
+
+  .color-chip.selected {
+    box-shadow: 0 0 0 3px #fff, 0 0 0 5px #333;
+  }
+
+  .check-icon {
+    width: 28px;
+    height: 28px;
+    color: white;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+  }
+
+  .toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
     cursor: pointer;
   }
 
-  .random-toggle input {
-    width: 20px;
-    height: 20px;
-    accent-color: var(--color-primary);
+  .toggle-row span {
+    font-size: 1rem;
+    color: #333;
   }
 
-  .slider-row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-  }
-
-  .slider-label {
-    min-width: 3rem;
-    text-align: center;
-    font-weight: 600;
-    color: var(--color-primary);
-  }
-
-  .slider-row input[type="range"] {
-    flex: 1;
-    height: 8px;
+  .toggle-row input[type="checkbox"] {
+    width: 48px;
+    height: 28px;
     -webkit-appearance: none;
     appearance: none;
-    background: var(--color-border);
-    border-radius: 4px;
+    background: #ddd;
+    border-radius: 14px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .toggle-row input[type="checkbox"]:checked {
+    background: var(--color-primary);
+  }
+
+  .toggle-row input[type="checkbox"]::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 24px;
+    height: 24px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  .toggle-row input[type="checkbox"]:checked::before {
+    transform: translateX(20px);
+  }
+
+  .slider-control {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem 0;
+  }
+
+  .slider-control input[type="range"] {
+    flex: 1;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #e0e0e0;
+    border-radius: 3px;
     outline: none;
   }
 
-  .slider-row input[type="range"]::-webkit-slider-thumb {
+  .slider-control input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     background: var(--color-primary);
     border-radius: 50%;
     cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
   }
 
-  .slider-row input[type="range"]::-moz-range-thumb {
-    width: 24px;
-    height: 24px;
+  .slider-control input[type="range"]::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
     background: var(--color-primary);
     border-radius: 50%;
     cursor: pointer;
     border: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
   }
 
-  .slider-row input[type="range"]:disabled {
-    opacity: 0.5;
+  .slider-value {
+    min-width: 3rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    text-align: right;
+  }
+
+  .random-hint {
+    color: #888;
+    font-size: 0.9rem;
+    padding: 0.5rem 0;
+  }
+
+  .start-btn {
+    width: 100%;
+    padding: 1.25rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.2s;
+    margin-top: auto;
+  }
+
+  .start-btn:hover {
+    background: var(--color-primary-dark);
+  }
+
+  .start-btn:active {
+    transform: scale(0.98);
   }
 </style>
