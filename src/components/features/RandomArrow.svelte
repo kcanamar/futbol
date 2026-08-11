@@ -8,16 +8,29 @@
 
   const MIN_INTERVAL = 0.5;
   const MAX_INTERVAL = 5;
+  const MIN_FLASH = 0.2;
+  const MAX_FLASH = 2;
 
   let currentArrow = $state<typeof ARROWS[0] | null>(null);
+  let visible = $state(true);
   let running = $state(false);
   let intervalSec = $state(2);
   let useRandomInterval = $state(false);
+  let flashMode = $state(false);
+  let flashDuration = $state(0.5);
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  let flashTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   function generateArrow() {
     const index = Math.floor(Math.random() * ARROWS.length);
     currentArrow = ARROWS[index];
+    visible = true;
+
+    if (flashMode) {
+      flashTimeoutId = setTimeout(() => {
+        visible = false;
+      }, flashDuration * 1000);
+    }
   }
 
   function getNextDelay(): number {
@@ -51,29 +64,38 @@
 
   function stop() {
     running = false;
+    visible = true;
     if (timeoutId) {
       clearTimeout(timeoutId);
       timeoutId = null;
+    }
+    if (flashTimeoutId) {
+      clearTimeout(flashTimeoutId);
+      flashTimeoutId = null;
     }
   }
 </script>
 
 {#if running}
   <div class="fullscreen-arrow">
-    <svg
-      class="arrow-icon"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      style:transform={`rotate(${currentArrow?.rotation ?? 0}deg)`}
-    >
-      <path d="M12 19V5"/>
-      <path d="M5 12l7-7 7 7"/>
-    </svg>
-    <span class="direction-label">{currentArrow?.name}</span>
+    {#if visible}
+      <svg
+        class="arrow-icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        style:transform={`rotate(${currentArrow?.rotation ?? 0}deg)`}
+      >
+        <path d="M12 19V5"/>
+        <path d="M5 12l7-7 7 7"/>
+      </svg>
+      <span class="direction-label">{currentArrow?.name}</span>
+    {:else}
+      <span class="blank-indicator">—</span>
+    {/if}
     <button class="stop-btn" onclick={toggle}>Stop</button>
   </div>
 {:else}
@@ -109,6 +131,29 @@
         </div>
       {:else}
         <p class="random-hint">0.5 - 5 seconds</p>
+      {/if}
+    </div>
+
+    <div class="settings-card">
+      <h2>Flash Mode</h2>
+
+      <label class="toggle-row">
+        <span>Brief flash only</span>
+        <input type="checkbox" bind:checked={flashMode} />
+      </label>
+
+      {#if flashMode}
+        <p class="flash-description">Arrow disappears after flash duration</p>
+        <div class="slider-control">
+          <input
+            type="range"
+            min={MIN_FLASH}
+            max={MAX_FLASH}
+            step="0.1"
+            bind:value={flashDuration}
+          />
+          <span class="slider-value">{flashDuration.toFixed(1)}s</span>
+        </div>
       {/if}
     </div>
 
@@ -151,6 +196,11 @@
     letter-spacing: 0.2em;
   }
 
+  .blank-indicator {
+    font-size: 10rem;
+    color: rgba(255, 255, 255, 0.15);
+  }
+
   .stop-btn {
     position: absolute;
     bottom: 2rem;
@@ -188,7 +238,7 @@
     background: #1a1a1a;
     border-radius: 20px;
     padding: 2rem;
-    min-height: 200px;
+    min-height: 150px;
   }
 
   .arrow-preview {
@@ -221,14 +271,14 @@
     color: #666;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
   }
 
   .toggle-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 0;
+    padding: 0.5rem 0;
     cursor: pointer;
   }
 
@@ -268,6 +318,12 @@
 
   .toggle-row input[type="checkbox"]:checked::before {
     transform: translateX(20px);
+  }
+
+  .flash-description {
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 0.5rem;
   }
 
   .slider-control {

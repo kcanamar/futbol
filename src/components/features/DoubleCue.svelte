@@ -10,18 +10,31 @@
 
   const MIN_INTERVAL = 0.5;
   const MAX_INTERVAL = 5;
+  const MIN_FLASH = 0.2;
+  const MAX_FLASH = 2;
 
   let number = $state(0);
   let currentColor = $state<typeof COLORS[0] | null>(null);
+  let visible = $state(true);
   let running = $state(false);
   let intervalSec = $state(2);
   let useRandomInterval = $state(false);
+  let flashMode = $state(false);
+  let flashDuration = $state(0.5);
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  let flashTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   function generate() {
     number = Math.floor(Math.random() * 100) + 1;
     const colorIndex = Math.floor(Math.random() * COLORS.length);
     currentColor = COLORS[colorIndex];
+    visible = true;
+
+    if (flashMode) {
+      flashTimeoutId = setTimeout(() => {
+        visible = false;
+      }, flashDuration * 1000);
+    }
   }
 
   function getNextDelay(): number {
@@ -55,29 +68,37 @@
 
   function stop() {
     running = false;
+    visible = true;
     if (timeoutId) {
       clearTimeout(timeoutId);
       timeoutId = null;
     }
+    if (flashTimeoutId) {
+      clearTimeout(flashTimeoutId);
+      flashTimeoutId = null;
+    }
   }
 
-  // Derive if number is odd or even for display hint
   let isOdd = $derived(number % 2 !== 0);
 </script>
 
 {#if running}
   <div
     class="fullscreen-cue"
-    style:background-color={currentColor?.hex}
+    style:background-color={visible ? currentColor?.hex : '#1a1a1a'}
   >
-    <span class="cue-number" style:color={currentColor?.textColor}>
-      {number}
-    </span>
-    <div class="cue-hints" style:color={currentColor?.textColor}>
-      <span class="hint">{currentColor?.name}</span>
-      <span class="hint-dot">•</span>
-      <span class="hint">{isOdd ? 'Odd' : 'Even'}</span>
-    </div>
+    {#if visible}
+      <span class="cue-number" style:color={currentColor?.textColor}>
+        {number}
+      </span>
+      <div class="cue-hints" style:color={currentColor?.textColor}>
+        <span class="hint">{currentColor?.name}</span>
+        <span class="hint-dot">•</span>
+        <span class="hint">{isOdd ? 'Odd' : 'Even'}</span>
+      </div>
+    {:else}
+      <span class="blank-indicator">—</span>
+    {/if}
     <button class="stop-btn" onclick={toggle}>Stop</button>
   </div>
 {:else}
@@ -121,6 +142,29 @@
       {/if}
     </div>
 
+    <div class="settings-card">
+      <h2>Flash Mode</h2>
+
+      <label class="toggle-row">
+        <span>Brief flash only</span>
+        <input type="checkbox" bind:checked={flashMode} />
+      </label>
+
+      {#if flashMode}
+        <p class="flash-description">Cue disappears after flash duration</p>
+        <div class="slider-control">
+          <input
+            type="range"
+            min={MIN_FLASH}
+            max={MAX_FLASH}
+            step="0.1"
+            bind:value={flashDuration}
+          />
+          <span class="slider-value">{flashDuration.toFixed(1)}s</span>
+        </div>
+      {/if}
+    </div>
+
     <button class="start-btn" onclick={toggle}>
       Start
     </button>
@@ -139,6 +183,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    transition: background-color 0.05s;
   }
 
   .cue-number {
@@ -165,6 +210,11 @@
 
   .hint-dot {
     font-size: 0.75rem;
+  }
+
+  .blank-indicator {
+    font-size: 10rem;
+    color: rgba(255, 255, 255, 0.15);
   }
 
   .stop-btn {
@@ -202,12 +252,12 @@
     align-items: center;
     justify-content: center;
     padding: 2rem;
-    min-height: 180px;
+    min-height: 150px;
   }
 
   .preview-cue {
-    width: 120px;
-    height: 120px;
+    width: 100px;
+    height: 100px;
     background: linear-gradient(135deg, #e53935 0%, #1e88e5 50%, #43a047 100%);
     border-radius: 20px;
     display: flex;
@@ -216,7 +266,7 @@
   }
 
   .preview-number {
-    font-size: 3rem;
+    font-size: 2.5rem;
     font-weight: 800;
     color: white;
   }
@@ -253,7 +303,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 0;
+    padding: 0.5rem 0;
     cursor: pointer;
   }
 
@@ -293,6 +343,12 @@
 
   .toggle-row input[type="checkbox"]:checked::before {
     transform: translateX(20px);
+  }
+
+  .flash-description {
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 0.5rem;
   }
 
   .slider-control {

@@ -14,13 +14,19 @@
   const MAX_COLORS = 6;
   const MIN_INTERVAL = 0.5;
   const MAX_INTERVAL = 5;
+  const MIN_FLASH = 0.2;
+  const MAX_FLASH = 2;
 
   let selectedIndices = $state(new Set([0, 1]));
   let currentColor = $state<string | null>(null);
+  let visible = $state(true);
   let running = $state(false);
   let intervalSec = $state(2);
   let useRandomInterval = $state(false);
+  let flashMode = $state(false);
+  let flashDuration = $state(0.5);
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  let flashTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   function toggleColor(index: number) {
     if (running) return;
@@ -42,6 +48,13 @@
     const indices = Array.from(selectedIndices);
     const randomIndex = indices[Math.floor(Math.random() * indices.length)];
     currentColor = COLORS[randomIndex].hex;
+    visible = true;
+
+    if (flashMode) {
+      flashTimeoutId = setTimeout(() => {
+        visible = false;
+      }, flashDuration * 1000);
+    }
   }
 
   function getNextDelay(): number {
@@ -75,9 +88,14 @@
 
   function stop() {
     running = false;
+    visible = true;
     if (timeoutId) {
       clearTimeout(timeoutId);
       timeoutId = null;
+    }
+    if (flashTimeoutId) {
+      clearTimeout(flashTimeoutId);
+      flashTimeoutId = null;
     }
   }
 
@@ -87,12 +105,10 @@
 </script>
 
 {#if running}
-  <!-- Fullscreen color display when running -->
-  <div class="fullscreen-color" style:background-color={currentColor}>
+  <div class="fullscreen-color" style:background-color={visible ? currentColor : '#1a1a1a'}>
     <button class="stop-btn" onclick={toggle}>Stop</button>
   </div>
 {:else}
-  <!-- Setup UI when stopped -->
   <div class="setup-screen">
     <div class="settings-card">
       <h2>Select {MIN_COLORS}-{MAX_COLORS} colors</h2>
@@ -141,6 +157,29 @@
       {/if}
     </div>
 
+    <div class="settings-card">
+      <h2>Flash Mode</h2>
+
+      <label class="toggle-row">
+        <span>Brief flash only</span>
+        <input type="checkbox" bind:checked={flashMode} />
+      </label>
+
+      {#if flashMode}
+        <p class="flash-description">Color disappears after flash duration</p>
+        <div class="slider-control">
+          <input
+            type="range"
+            min={MIN_FLASH}
+            max={MAX_FLASH}
+            step="0.1"
+            bind:value={flashDuration}
+          />
+          <span class="slider-value">{flashDuration.toFixed(1)}s</span>
+        </div>
+      {/if}
+    </div>
+
     <button class="start-btn" onclick={toggle}>
       Start
     </button>
@@ -148,7 +187,6 @@
 {/if}
 
 <style>
-  /* Fullscreen running state */
   .fullscreen-color {
     position: fixed;
     top: 0;
@@ -160,6 +198,7 @@
     align-items: flex-end;
     justify-content: center;
     padding-bottom: 2rem;
+    transition: background-color 0.05s;
   }
 
   .stop-btn {
@@ -180,7 +219,6 @@
     background: rgba(0, 0, 0, 0.4);
   }
 
-  /* Setup screen */
   .setup-screen {
     min-height: calc(100vh - 80px);
     min-height: calc(100dvh - 80px);
@@ -253,7 +291,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 0;
+    padding: 0.5rem 0;
     cursor: pointer;
   }
 
@@ -293,6 +331,12 @@
 
   .toggle-row input[type="checkbox"]:checked::before {
     transform: translateX(20px);
+  }
+
+  .flash-description {
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 0.5rem;
   }
 
   .slider-control {

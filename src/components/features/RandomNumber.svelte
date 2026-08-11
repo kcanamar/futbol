@@ -1,15 +1,28 @@
 <script lang="ts">
   const MIN_INTERVAL = 0.5;
   const MAX_INTERVAL = 5;
+  const MIN_FLASH = 0.2;
+  const MAX_FLASH = 2;
 
   let number = $state(0);
+  let visible = $state(true);
   let running = $state(false);
   let intervalSec = $state(2);
   let useRandomInterval = $state(false);
+  let flashMode = $state(false);
+  let flashDuration = $state(0.5);
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  let flashTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   function generateNumber() {
     number = Math.floor(Math.random() * 100) + 1;
+    visible = true;
+
+    if (flashMode) {
+      flashTimeoutId = setTimeout(() => {
+        visible = false;
+      }, flashDuration * 1000);
+    }
   }
 
   function getNextDelay(): number {
@@ -43,21 +56,28 @@
 
   function stop() {
     running = false;
+    visible = true;
     if (timeoutId) {
       clearTimeout(timeoutId);
       timeoutId = null;
+    }
+    if (flashTimeoutId) {
+      clearTimeout(flashTimeoutId);
+      flashTimeoutId = null;
     }
   }
 </script>
 
 {#if running}
-  <!-- Fullscreen display when running -->
   <div class="fullscreen-number">
-    <span class="giant-number">{number}</span>
+    {#if visible}
+      <span class="giant-number">{number}</span>
+    {:else}
+      <span class="giant-number blank">—</span>
+    {/if}
     <button class="stop-btn" onclick={toggle}>Stop</button>
   </div>
 {:else}
-  <!-- Setup UI when stopped -->
   <div class="setup-screen">
     <div class="preview-number">
       <span>{number || '?'}</span>
@@ -87,6 +107,29 @@
       {/if}
     </div>
 
+    <div class="settings-card">
+      <h2>Flash Mode</h2>
+
+      <label class="toggle-row">
+        <span>Brief flash only</span>
+        <input type="checkbox" bind:checked={flashMode} />
+      </label>
+
+      {#if flashMode}
+        <p class="flash-description">Number disappears after flash duration</p>
+        <div class="slider-control">
+          <input
+            type="range"
+            min={MIN_FLASH}
+            max={MAX_FLASH}
+            step="0.1"
+            bind:value={flashDuration}
+          />
+          <span class="slider-value">{flashDuration.toFixed(1)}s</span>
+        </div>
+      {/if}
+    </div>
+
     <button class="start-btn" onclick={toggle}>
       Start
     </button>
@@ -94,7 +137,6 @@
 {/if}
 
 <style>
-  /* Fullscreen running state */
   .fullscreen-number {
     position: fixed;
     top: 0;
@@ -117,6 +159,10 @@
     font-variant-numeric: tabular-nums;
   }
 
+  .giant-number.blank {
+    opacity: 0.15;
+  }
+
   .stop-btn {
     position: absolute;
     bottom: 2rem;
@@ -136,13 +182,13 @@
     color: #fff;
   }
 
-  /* Setup screen */
   .setup-screen {
     min-height: calc(100vh - 80px);
     min-height: calc(100dvh - 80px);
     display: flex;
     flex-direction: column;
     padding: 1rem;
+    gap: 1rem;
   }
 
   .preview-number {
@@ -152,11 +198,11 @@
     justify-content: center;
     background: #1a1a1a;
     border-radius: 20px;
-    margin-bottom: 1.5rem;
+    min-height: 150px;
   }
 
   .preview-number span {
-    font-size: 30vw;
+    font-size: 25vw;
     font-weight: 800;
     color: #ffffff;
     opacity: 0.4;
@@ -166,7 +212,6 @@
     background: #fff;
     border-radius: 16px;
     padding: 1.5rem;
-    margin-bottom: 1rem;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   }
 
@@ -176,14 +221,14 @@
     color: #666;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
   }
 
   .toggle-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 0;
+    padding: 0.5rem 0;
     cursor: pointer;
   }
 
@@ -223,6 +268,12 @@
 
   .toggle-row input[type="checkbox"]:checked::before {
     transform: translateX(20px);
+  }
+
+  .flash-description {
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 0.5rem;
   }
 
   .slider-control {
