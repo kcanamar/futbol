@@ -4,36 +4,174 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 const tools = [
   {
     href: '/random-number/',
-    icon: '#',
     title: 'Random Number',
-    description: 'Generate random numbers 1-100 on 2-second loop',
+    description: 'Numbers 1-100 for drills',
+    color: '#1a1a1a',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <text x="5" y="18" font-size="16" font-weight="bold" fill="currentColor" stroke="none">42</text>
+    </svg>`,
   },
   {
     href: '/random-color/',
-    icon: '●',
     title: 'Random Color',
-    description: 'Cycle through selected colors on 2-second loop',
+    description: 'Color cycling for teams',
+    color: '#e53935',
+    icon: `<svg viewBox="0 0 24 24" fill="currentColor">
+      <circle cx="8" cy="8" r="5" fill="#e53935"/>
+      <circle cx="16" cy="8" r="5" fill="#1e88e5"/>
+      <circle cx="12" cy="15" r="5" fill="#43a047"/>
+    </svg>`,
+  },
+  {
+    href: '/arrows/',
+    title: 'Arrows',
+    description: 'Directional cues for spatial awareness',
+    color: '#5c6bc0',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M12 19V5M5 12l7-7 7 7"/>
+    </svg>`,
+  },
+  {
+    href: '/double-cue/',
+    title: 'Combo',
+    description: 'Number + Color for cognitive load',
+    color: '#f57c00',
+    icon: `<svg viewBox="0 0 24 24" fill="currentColor">
+      <rect x="3" y="3" width="18" height="18" rx="4" fill="#1e88e5"/>
+      <text x="12" y="16" font-size="12" font-weight="bold" fill="white" text-anchor="middle">7</text>
+    </svg>`,
   },
   {
     href: '/interval-timer/',
-    icon: '⏱',
-    title: 'Interval Timer',
-    description: 'Repeating countdown with audio alert',
+    title: 'Timer',
+    description: 'Timed intervals with beep',
+    color: '#2d5a27',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="13" r="9"/>
+      <path d="M12 6v7l4 2"/>
+      <path d="M9 1h6"/>
+    </svg>`,
   },
 ];
 ---
 
 <BaseLayout title="Home">
-  <h1>Futbol Training Tools</h1>
-  <div class="tool-grid">
-    {tools.map(tool => (
-      <a href={tool.href} class="tool-card">
-        <div class="tool-card-icon">{tool.icon}</div>
-        <div class="tool-card-content">
-          <h2>{tool.title}</h2>
-          <p>{tool.description}</p>
-        </div>
-      </a>
-    ))}
+  <div class="home">
+    <header class="hero">
+      <h1>Futbol Training</h1>
+      <p>Coaching tools for the field</p>
+    </header>
+
+    <div class="tool-list">
+      {tools.map(tool => (
+        <a href={tool.href} class="tool-card">
+          <div class="tool-icon" style={`background: ${tool.color}`}>
+            <Fragment set:html={tool.icon} />
+          </div>
+          <div class="tool-info">
+            <h2>{tool.title}</h2>
+            <p>{tool.description}</p>
+          </div>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+        </a>
+      ))}
+    </div>
   </div>
 </BaseLayout>
+
+<style>
+  .home {
+    min-height: calc(100vh - 80px);
+    min-height: calc(100dvh - 80px);
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+  }
+
+  .hero {
+    text-align: center;
+    padding: 1.5rem 0 2rem;
+  }
+
+  .hero h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+  }
+
+  .hero p {
+    font-size: 1rem;
+    color: #666;
+  }
+
+  .tool-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .tool-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #fff;
+    border-radius: 16px;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .tool-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  }
+
+  .tool-card:active {
+    transform: scale(0.98);
+  }
+
+  .tool-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: white;
+  }
+
+  .tool-icon :global(svg) {
+    width: 26px;
+    height: 26px;
+  }
+
+  .tool-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .tool-info h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 0.125rem;
+  }
+
+  .tool-info p {
+    font-size: 0.8rem;
+    color: #888;
+  }
+
+  .arrow {
+    width: 20px;
+    height: 20px;
+    color: #ccc;
+    flex-shrink: 0;
+  }
+</style>

@@ -5,12 +5,14 @@ const links = [
   { href: '/', label: 'Home' },
   { href: '/random-number/', label: 'Number' },
   { href: '/random-color/', label: 'Color' },
+  { href: '/arrows/', label: 'Arrows' },
+  { href: '/double-cue/', label: 'Combo' },
   { href: '/interval-timer/', label: 'Timer' },
 ];
 ---
 
 <nav class="nav">
-  <div class="nav-inner container">
+  <div class="nav-inner">
     {links.map(link => (
       <a
         href={link.href}
@@ -28,28 +30,34 @@ const links = [
     position: sticky;
     top: 0;
     z-index: 100;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nav::-webkit-scrollbar {
+    display: none;
   }
 
   .nav-inner {
     display: flex;
-    gap: var(--space-xs);
-    padding-top: var(--space-sm);
-    padding-bottom: var(--space-sm);
+    gap: 2px;
+    padding: 0.5rem;
+    min-width: max-content;
   }
 
   .nav-link {
-    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: var(--touch-target);
-    padding: var(--space-sm);
-    color: rgba(255, 255, 255, 0.8);
+    min-height: 40px;
+    padding: 0.5rem 0.75rem;
+    color: rgba(255, 255, 255, 0.75);
     text-decoration: none;
-    font-size: var(--font-size-sm);
+    font-size: 0.8rem;
     font-weight: 500;
-    border-radius: var(--border-radius);
+    border-radius: 8px;
     transition: background-color 0.2s, color 0.2s;
+    white-space: nowrap;
   }
 
   .nav-link:hover {
