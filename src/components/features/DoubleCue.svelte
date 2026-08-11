@@ -8,11 +8,14 @@
     { name: 'Purple', hex: '#8e24aa' },
   ];
 
+  const MIN_COLORS = 2;
+  const MAX_COLORS = 6;
   const MIN_INTERVAL = 0.5;
   const MAX_INTERVAL = 5;
   const MIN_FLASH = 0.2;
   const MAX_FLASH = 2;
 
+  let selectedIndices = $state(new Set([0, 1, 2, 3]));
   let number = $state(0);
   let currentColor = $state<typeof COLORS[0] | null>(null);
   let textColor = $state<typeof COLORS[0] | null>(null);
@@ -26,20 +29,39 @@
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
   let flashTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
+  function toggleColor(index: number) {
+    if (running) return;
+    const newSet = new Set(selectedIndices);
+    if (newSet.has(index)) {
+      if (newSet.size > MIN_COLORS) {
+        newSet.delete(index);
+      }
+    } else {
+      if (newSet.size < MAX_COLORS) {
+        newSet.add(index);
+      }
+    }
+    selectedIndices = newSet;
+  }
+
+  function isSelected(index: number): boolean {
+    return selectedIndices.has(index);
+  }
+
   function getContrastingColor(bgIndex: number): typeof COLORS[0] {
-    let textIndex: number;
-    do {
-      textIndex = Math.floor(Math.random() * COLORS.length);
-    } while (textIndex === bgIndex);
+    const indices = Array.from(selectedIndices);
+    const otherIndices = indices.filter(i => i !== bgIndex);
+    const textIndex = otherIndices[Math.floor(Math.random() * otherIndices.length)];
     return COLORS[textIndex];
   }
 
   function generate() {
     number = Math.floor(Math.random() * 100) + 1;
-    const colorIndex = Math.floor(Math.random() * COLORS.length);
-    currentColor = COLORS[colorIndex];
+    const indices = Array.from(selectedIndices);
+    const randomIdx = indices[Math.floor(Math.random() * indices.length)];
+    currentColor = COLORS[randomIdx];
     showNumber = Math.random() < 0.5;
-    textColor = showNumber ? null : getContrastingColor(colorIndex);
+    textColor = showNumber ? null : getContrastingColor(randomIdx);
     visible = true;
 
     if (flashMode) {
@@ -131,6 +153,29 @@
         Randomly shows either a number (1-100) or a color word on a colored background.
         Color words appear in a contrasting color for extra cognitive challenge.
       </p>
+    </div>
+
+    <div class="settings-card">
+      <h2>Select {MIN_COLORS}-{MAX_COLORS} colors</h2>
+      <p class="selection-count">{selectedIndices.size} selected</p>
+
+      <div class="color-grid">
+        {#each COLORS as color, index}
+          <button
+            class="color-chip"
+            class:selected={isSelected(index)}
+            style:background-color={color.hex}
+            onclick={() => toggleColor(index)}
+            aria-label={color.name}
+          >
+            {#if isSelected(index)}
+              <svg viewBox="0 0 24 24" class="check-icon">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/>
+              </svg>
+            {/if}
+          </button>
+        {/each}
+      </div>
     </div>
 
     <div class="settings-card">
@@ -311,6 +356,49 @@
     font-size: 0.9rem;
     color: #555;
     line-height: 1.5;
+  }
+
+  .selection-count {
+    font-size: 0.8rem;
+    color: #999;
+    margin-bottom: 1rem;
+  }
+
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+  }
+
+  .color-chip {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
+  }
+
+  .color-chip:hover {
+    transform: scale(1.05);
+  }
+
+  .color-chip:active {
+    transform: scale(0.95);
+  }
+
+  .color-chip.selected {
+    box-shadow: 0 0 0 3px #fff, 0 0 0 5px #333;
+  }
+
+  .check-icon {
+    width: 28px;
+    height: 28px;
+    color: white;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
   }
 
   .toggle-row {
