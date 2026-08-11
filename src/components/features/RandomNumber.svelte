@@ -56,43 +56,87 @@
 </script>
 
 <div class="random-number">
-  <div class="display-box">
-    <span class="display-number">{number || '—'}</span>
+  <div class="display-box-fullscreen">
+    <span class="display-number-huge">{number || '—'}</span>
   </div>
 
-  <p class="status" class:running>
-    {running ? `Running - ${formatInterval()}` : 'Stopped'}
-  </p>
+  <div class="bottom-controls">
+    <p class="status" class:running>
+      {running ? `Running - ${formatInterval()}` : 'Stopped'}
+    </p>
 
-  <div class="interval-controls">
-    <label class="random-toggle">
-      <input type="checkbox" bind:checked={useRandomInterval} disabled={running} />
-      Random interval
-    </label>
+    <div class="interval-controls">
+      <label class="random-toggle">
+        <input type="checkbox" bind:checked={useRandomInterval} disabled={running} />
+        Random interval
+      </label>
 
-    {#if !useRandomInterval}
-      <div class="slider-row">
-        <span class="slider-label">{intervalSec}s</span>
-        <input
-          type="range"
-          min={MIN_INTERVAL}
-          max={MAX_INTERVAL}
-          step="0.5"
-          bind:value={intervalSec}
-          disabled={running}
-        />
-      </div>
-    {/if}
-  </div>
+      {#if !useRandomInterval}
+        <div class="slider-row">
+          <span class="slider-label">{intervalSec}s</span>
+          <input
+            type="range"
+            min={MIN_INTERVAL}
+            max={MAX_INTERVAL}
+            step="0.5"
+            bind:value={intervalSec}
+            disabled={running}
+          />
+        </div>
+      {/if}
+    </div>
 
-  <div class="controls">
-    <button class="btn btn-large" class:btn-primary={!running} class:btn-secondary={running} onclick={toggle}>
-      {running ? 'Stop' : 'Start'}
-    </button>
+    <div class="controls">
+      <button class="btn btn-large" class:btn-primary={!running} class:btn-secondary={running} onclick={toggle}>
+        {running ? 'Stop' : 'Start'}
+      </button>
+    </div>
   </div>
 </div>
 
 <style>
+  .random-number {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 64px); /* subtract nav height */
+    height: calc(100dvh - 64px);
+  }
+
+  .display-box-fullscreen {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-surface);
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: var(--space-md);
+    min-height: 0;
+  }
+
+  .display-number-huge {
+    font-size: clamp(6rem, 35vw, 20rem);
+    font-weight: 700;
+    color: var(--color-primary);
+    line-height: 1;
+  }
+
+  .bottom-controls {
+    flex-shrink: 0;
+    padding-bottom: var(--space-md);
+  }
+
+  .status {
+    text-align: center;
+    padding: var(--space-sm);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+  }
+
+  .status.running {
+    color: var(--color-success);
+  }
+
   .interval-controls {
     margin-bottom: var(--space-lg);
   }

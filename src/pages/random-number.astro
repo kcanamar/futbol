@@ -4,6 +4,11 @@ import RandomNumber from '../components/features/RandomNumber.svelte';
 ---
 
 <BaseLayout title="Random Number">
-  <h1>Random Number</h1>
   <RandomNumber client:load />
 </BaseLayout>
+
+<style>
+  :global(.page-content) {
+    padding: var(--space-sm);
+  }
+</style>
