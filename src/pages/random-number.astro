@@ -1,0 +1,9 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import RandomNumber from '../components/features/RandomNumber.svelte';
+---
+
+<BaseLayout title="Random Number">
+  <h1>Random Number</h1>
+  <RandomNumber client:load />
+</BaseLayout>

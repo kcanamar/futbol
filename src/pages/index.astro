@@ -1,0 +1,39 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const tools = [
+  {
+    href: '/random-number/',
+    icon: '#',
+    title: 'Random Number',
+    description: 'Generate random numbers 1-100 on 2-second loop',
+  },
+  {
+    href: '/random-color/',
+    icon: '●',
+    title: 'Random Color',
+    description: 'Cycle through selected colors on 2-second loop',
+  },
+  {
+    href: '/interval-timer/',
+    icon: '⏱',
+    title: 'Interval Timer',
+    description: 'Repeating countdown with audio alert',
+  },
+];
+---
+
+<BaseLayout title="Home">
+  <h1>Futbol Training Tools</h1>
+  <div class="tool-grid">
+    {tools.map(tool => (
+      <a href={tool.href} class="tool-card">
+        <div class="tool-card-icon">{tool.icon}</div>
+        <div class="tool-card-content">
+          <h2>{tool.title}</h2>
+          <p>{tool.description}</p>
+        </div>
+      </a>
+    ))}
+  </div>
+</BaseLayout>

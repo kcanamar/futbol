@@ -1,0 +1,64 @@
+---
+const pathname = Astro.url.pathname;
+
+const links = [
+  { href: '/', label: 'Home' },
+  { href: '/random-number/', label: 'Number' },
+  { href: '/random-color/', label: 'Color' },
+  { href: '/interval-timer/', label: 'Timer' },
+];
+---
+
+<nav class="nav">
+  <div class="nav-inner container">
+    {links.map(link => (
+      <a
+        href={link.href}
+        class:list={['nav-link', { active: pathname === link.href }]}
+      >
+        {link.label}
+      </a>
+    ))}
+  </div>
+</nav>
+
+<style>
+  .nav {
+    background-color: var(--color-primary);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .nav-inner {
+    display: flex;
+    gap: var(--space-xs);
+    padding-top: var(--space-sm);
+    padding-bottom: var(--space-sm);
+  }
+
+  .nav-link {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--touch-target);
+    padding: var(--space-sm);
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    border-radius: var(--border-radius);
+    transition: background-color 0.2s, color 0.2s;
+  }
+
+  .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+  }
+
+  .nav-link.active {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+  }
+</style>
